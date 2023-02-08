@@ -41,11 +41,45 @@ fun Application.configureRouting() {
         }
 
         accept(ContentType.Application.Json) {
-            post("/login") {
+            post("/login/m2m") {
+                    val user = call.receive<User>()
+                    println("Got request from user ${user.username}, ${user.password} ")
+
+                    val privateKeyString =
+                        this@configureRouting.environment.config.property("jwt.jwt2048.privateKey").getString()
+                    val issuer = this@configureRouting.environment.config.property("jwt.issuer").getString()
+                    val audience = this@configureRouting.environment.config.property("jwt.audience").getString()
+                    val myRealm = this@configureRouting.environment.config.property("jwt.realm").getString()
+
+                    val jwkProvider = JwkProviderBuilder(issuer)
+                        .cached(10, 24, TimeUnit.HOURS)
+                        .rateLimited(10, 1, TimeUnit.MINUTES)
+                        .build()
+
+                    val pki = "jwt2048"
+                    //    val publicKey = jwkProvider.get("6f8856ed-9189-488f-9011-0ff4b6c08edc").publicKey
+                    val publicKey = jwkProvider.get(pki).publicKey
+                    val keySpecPKCS8 = PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyString))
+                    val privateKey = KeyFactory.getInstance("RSA").generatePrivate(keySpecPKCS8)
+                    val token = JWT.create()
+                        .withAudience(audience)
+                        .withIssuer(issuer)
+                        .withClaim("username", user.username)
+                        .withClaim("scp", "access_as_m2m")
+                        .withExpiresAt(Date(System.currentTimeMillis() + 60000))
+                        .withKeyId(pki)
+                        .sign(Algorithm.RSA256(publicKey as RSAPublicKey, privateKey as RSAPrivateKey))
+                    call.respond(hashMapOf("token" to token))
+
+                    //   call.respond(HttpStatusCode.OK)
+                }
+
+            post("/login/human") {
                 val user = call.receive<User>()
                 println("Got request from user ${user.username}, ${user.password} ")
 
-                val privateKeyString = this@configureRouting.environment.config.property("jwt.privateKey").getString()
+                val privateKeyString =
+                    this@configureRouting.environment.config.property("jwt.short.privateKey").getString()
                 val issuer = this@configureRouting.environment.config.property("jwt.issuer").getString()
                 val audience = this@configureRouting.environment.config.property("jwt.audience").getString()
                 val myRealm = this@configureRouting.environment.config.property("jwt.realm").getString()
@@ -55,7 +89,7 @@ fun Application.configureRouting() {
                     .rateLimited(10, 1, TimeUnit.MINUTES)
                     .build()
 
-                val pki = "example"
+                val pki = "short"
                 //    val publicKey = jwkProvider.get("6f8856ed-9189-488f-9011-0ff4b6c08edc").publicKey
                 val publicKey = jwkProvider.get(pki).publicKey
                 val keySpecPKCS8 = PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyString))

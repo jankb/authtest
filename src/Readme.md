@@ -21,6 +21,10 @@ openssl rsa -inform PEM -pubin -in jwtRS256.key.pub -text -noout
 openssl rsa -in priv -pubout 
 
 
+### Generate private key?
+> openssl genrsa -out private.pem 2048
+
 ### Get modulo from private key.
 Dump modulus and other info
-> openssl rsa -in priv.key -text -noout | sed -n '/modulus/,/publicExponent/{//b;p}' | tr -d '\n ' | cut -b 4- | xxd -r -p | base64 | tr -d '\n'
+> openssl rsa -in priv.key -text -noout | sed -n '/modulus/,/publicExponent/{//b;p}' | tr -d '\n ' | cut -b 4- | xxd -r -p | base64 | tr -d '\n' | tr '+/' '-_'
+
