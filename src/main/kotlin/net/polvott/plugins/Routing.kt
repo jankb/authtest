@@ -55,8 +55,9 @@ fun Application.configureRouting() {
                     .rateLimited(10, 1, TimeUnit.MINUTES)
                     .build()
 
+                val pki = "example"
                 //    val publicKey = jwkProvider.get("6f8856ed-9189-488f-9011-0ff4b6c08edc").publicKey
-                val publicKey = jwkProvider.get("2023-02-07").publicKey
+                val publicKey = jwkProvider.get(pki).publicKey
                 val keySpecPKCS8 = PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyString))
                 val privateKey = KeyFactory.getInstance("RSA").generatePrivate(keySpecPKCS8)
                 val token = JWT.create()
@@ -65,7 +66,7 @@ fun Application.configureRouting() {
                     .withClaim("username", user.username)
                     .withClaim("scp", "access_as_user")
                     .withExpiresAt(Date(System.currentTimeMillis() + 60000))
-                    .withKeyId("2023-02-07")
+                    .withKeyId(pki)
                     .sign(Algorithm.RSA256(publicKey as RSAPublicKey, privateKey as RSAPrivateKey))
                 call.respond(hashMapOf("token" to token))
 
@@ -73,13 +74,23 @@ fun Application.configureRouting() {
             }
         }
 
-        authenticate("jwt-auth")
+        authenticate("jwt-auth-m2m")
         {
-            get("/hello")
+            get("/m2m")
             {
                 val principal = call.principal<JWTPrincipal>()
                 val username = principal!!.payload.getClaim("username").asString()
-                call.respondText("Hello $username")
+                call.respondText("Hello m2m $username")
+            }
+        }
+
+        authenticate("jwt-auth-human", "jwt-auth-m2m")
+        {
+            get("/human")
+            {
+                val principal = call.principal<JWTPrincipal>()
+                val username = principal!!.payload.getClaim("username").asString()
+                call.respondText("Hello human $username")
             }
         }
     }

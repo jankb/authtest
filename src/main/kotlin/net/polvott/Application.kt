@@ -42,7 +42,24 @@ fun Application.module() {
         .build()
 
     install(Authentication) {
-        jwt("jwt-auth") {
+        jwt("jwt-auth-m2m") {
+            realm = myRealm
+            verifier(jwkProvider, issuer) {
+                acceptLeeway(3)
+            }
+            validate { credential ->
+                if (credential.payload.getClaim("username").asString() != "") {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+            challenge { defaultScheme, realm ->
+                call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+            }
+        }
+
+        jwt("jwt-auth-human") {
             realm = myRealm
             verifier(jwkProvider, issuer) {
                 acceptLeeway(3)

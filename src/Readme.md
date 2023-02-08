@@ -19,3 +19,8 @@ https://serverfault.com/questions/9708/what-is-a-pem-file-and-how-does-it-differ
 openssl rsa -inform PEM -pubin -in jwtRS256.key.pub -text -noout
 
 openssl rsa -in priv -pubout 
+
+
+### Get modulo from private key.
+Dump modulus and other info
+> openssl rsa -in priv.key -text -noout | sed -n '/modulus/,/publicExponent/{//b;p}' | tr -d '\n ' | cut -b 4- | xxd -r -p | base64 | tr -d '\n'
