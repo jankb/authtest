@@ -1,10 +1,15 @@
 package net.polvott.plugins
 
-
+import com.auth0.jwk.*
+import com.auth0.jwt.*
+import com.auth0.jwt.algorithms.*
 import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.http.content.*
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -12,23 +17,15 @@ import io.ktor.server.routing.accept
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.server.auth.jwt.*
-import io.ktor.server.auth.*
 import net.polvott.dto.User
-
+import java.io.*
 import java.security.*
 import java.security.interfaces.*
 import java.security.spec.*
-import java.util.concurrent.*
 import java.util.*
-import java.io.*
-import com.auth0.jwt.*
-import com.auth0.jwk.*
-import com.auth0.jwt.algorithms.*
-import io.ktor.server.http.content.*
+import java.util.concurrent.*
 
 fun Application.configureRouting() {
-
     routing {
         get("/") {
             call.respondText("Hello World!")
@@ -58,7 +55,7 @@ fun Application.configureRouting() {
                     .rateLimited(10, 1, TimeUnit.MINUTES)
                     .build()
 
-            //    val publicKey = jwkProvider.get("6f8856ed-9189-488f-9011-0ff4b6c08edc").publicKey
+                //    val publicKey = jwkProvider.get("6f8856ed-9189-488f-9011-0ff4b6c08edc").publicKey
                 val publicKey = jwkProvider.get("2023-02-07").publicKey
                 val keySpecPKCS8 = PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyString))
                 val privateKey = KeyFactory.getInstance("RSA").generatePrivate(keySpecPKCS8)
@@ -66,11 +63,23 @@ fun Application.configureRouting() {
                     .withAudience(audience)
                     .withIssuer(issuer)
                     .withClaim("username", user.username)
+                    .withClaim("scp", "access_as_user")
                     .withExpiresAt(Date(System.currentTimeMillis() + 60000))
+                    .withKeyId("2023-02-07")
                     .sign(Algorithm.RSA256(publicKey as RSAPublicKey, privateKey as RSAPrivateKey))
                 call.respond(hashMapOf("token" to token))
 
-             //   call.respond(HttpStatusCode.OK)
+                //   call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        authenticate("jwt-auth")
+        {
+            get("/hello")
+            {
+                val principal = call.principal<JWTPrincipal>()
+                val username = principal!!.payload.getClaim("username").asString()
+                call.respondText("Hello $username")
             }
         }
     }
