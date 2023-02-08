@@ -17,3 +17,5 @@ https://www.rfc-editor.org/rfc/rfc8693.html#name-scope-scopes-claim
 https://serverfault.com/questions/9708/what-is-a-pem-file-and-how-does-it-differ-from-other-openssl-generated-key-file
 
 openssl rsa -inform PEM -pubin -in jwtRS256.key.pub -text -noout
+
+openssl rsa -in priv -pubout 
