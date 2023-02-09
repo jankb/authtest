@@ -92,8 +92,6 @@ fun Application.module() {
             }
         }
     }
-    //  configureSecurity()
-    //  configureMonitoring()
     configureIssuerA()
     configureIssuerB()
     configureRouting()
