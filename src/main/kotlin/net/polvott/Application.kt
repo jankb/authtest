@@ -33,22 +33,28 @@ fun Application.module() {
         )
     }
 
-    val issuer = environment.config.property("jwt.issuer").getString()
-    val myRealm = environment.config.property("jwt.realm").getString()
 
-    val jwkProvider = JwkProviderBuilder(issuer)
-        .cached(10, 24, TimeUnit.HOURS)
-        .rateLimited(10, 1, TimeUnit.MINUTES)
-        .build()
 
     install(Authentication) {
-        jwt("jwt-auth-m2m") {
+
+
+        jwt("jwt-auth-issuerA") {
+            val issuer = this@module.environment.config.property("jwt.issuerA.issuer").getString()
+            val myRealm = this@module.environment.config.property("jwt.issuerA.realm").getString()
+
+            val jwkProvider = JwkProviderBuilder(issuer)
+                .cached(10, 24, TimeUnit.HOURS)
+                .rateLimited(10, 1, TimeUnit.MINUTES)
+                .build()
+
             realm = myRealm
             verifier(jwkProvider, issuer) {
                 acceptLeeway(3)
+                withIssuer(issuer)
             }
             validate { credential ->
-                if (credential.payload.getClaim("username").asString() != "") {
+                if ((credential.payload.getClaim("username").asString() != "")) {
+                    println("### jwt-auth-issuerA ### Issuer ${credential.issuer}")
                     JWTPrincipal(credential.payload)
                 } else {
                     null
@@ -59,13 +65,23 @@ fun Application.module() {
             }
         }
 
-        jwt("jwt-auth-human") {
+        jwt("jwt-auth-issuerB") {
+            val issuerB = this@module.environment.config.property("jwt.issuerB.issuer").getString()
+            val myRealm = this@module.environment.config.property("jwt.issuerB.realm").getString()
+
+            val jwkProvider = JwkProviderBuilder(issuerB)
+                .cached(10, 24, TimeUnit.HOURS)
+                .rateLimited(10, 1, TimeUnit.MINUTES)
+                .build()
+
             realm = myRealm
-            verifier(jwkProvider, issuer) {
+            verifier(jwkProvider, issuerB) {
                 acceptLeeway(3)
+                withIssuer(issuerB)
             }
             validate { credential ->
                 if (credential.payload.getClaim("username").asString() != "") {
+                    println("### jwt-auth-issuerB ### Issuer ${credential.issuer}")
                     JWTPrincipal(credential.payload)
                 } else {
                     null
@@ -78,5 +94,7 @@ fun Application.module() {
     }
     //  configureSecurity()
     //  configureMonitoring()
+    configureIssuerA()
+    configureIssuerB()
     configureRouting()
 }

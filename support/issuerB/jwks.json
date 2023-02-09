@@ -1,0 +1,10 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "e": "AQAB",
+      "kid": "issuerB",
+      "n": "wFPVl7xLVD9sR-UXYNOMmLykMXZv5TIaC3DsyrX1ox2gWGksTJ-6P3WrJKZMb6lVhv7ZJ4xKXYTgVjkvXHfNZw=="
+    }
+  ]
+}
