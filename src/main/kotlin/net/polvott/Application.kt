@@ -1,20 +1,19 @@
 package net.polvott
 
 import com.auth0.jwk.JwkProviderBuilder
-import io.ktor.client.plugins.*
-import io.ktor.http.*
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.*
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.respond
 import kotlinx.serialization.json.Json
-import net.polvott.plugins.*
+import net.polvott.plugins.configureIssuerA
+import net.polvott.plugins.configureIssuerB
+import net.polvott.plugins.configureRouting
 import java.util.concurrent.TimeUnit
 
 fun main(args: Array<String>): Unit =
@@ -33,11 +32,7 @@ fun Application.module() {
         )
     }
 
-
-
     install(Authentication) {
-
-
         jwt("jwt-auth-issuerA") {
             val issuer = this@module.environment.config.property("jwt.issuerA.issuer").getString()
             val myRealm = this@module.environment.config.property("jwt.issuerA.realm").getString()
@@ -60,8 +55,8 @@ fun Application.module() {
                     null
                 }
             }
-            challenge { defaultScheme, realm ->
-                call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+            challenge { _, _ ->
+                call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired\n")
             }
         }
 
@@ -87,8 +82,8 @@ fun Application.module() {
                     null
                 }
             }
-            challenge { defaultScheme, realm ->
-                call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+            challenge { _, _ ->
+                call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired\n")
             }
         }
     }
