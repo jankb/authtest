@@ -23,6 +23,14 @@ fun Application.configureRouting() {
             }
         }
 
+        authenticate("jwt-auth-issuerB") {
+            get("/acceptB") {
+                val principal = call.principal<JWTPrincipal>()
+                val username = principal!!.payload.getClaim("username").asString()
+                call.respondText("Hello $username\n")
+            }
+        }
+
         authenticate("jwt-auth-issuerA", "jwt-auth-issuerB") {
             get("/acceptAB") {
                 val principal = call.principal<JWTPrincipal>()
